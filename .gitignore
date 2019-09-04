@@ -4,6 +4,7 @@
 # project dirs
 data/
 submit/
+video/
 
 # python cache
 __pycache__/

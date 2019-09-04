@@ -7,8 +7,8 @@ import os
 import time
 import numpy as np
 
-from data_config import config
-from data_loader import get_folders, MyDataSet
+from DataProcess.data_config import config
+from DataProcess.data_loader import get_folders, MyDataSet
 # from resnet import resnet50, resnet152
 
 
@@ -18,23 +18,27 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def main():
-    
+
     #=======================================
     #           1. Load dataset
     #=======================================
-    train_folders, valid_folders = get_folders(config.train_data, config.valid_data)
+    train_folders, valid_folders = get_folders(
+        config.train_data, config.valid_data)
     train_datasets = MyDataSet(train_folders, transforms=None)
     valid_datasets = MyDataSet(valid_folders, transforms=None, train=False)
-    train_loader = DataLoader(dataset=train_datasets, batch_size=config.batch_size, shuffle=True)
-    valid_loader = DataLoader(dataset=valid_datasets, batch_size=config.batch_size, shuffle=True)
+    train_loader = DataLoader(dataset=train_datasets,
+                              batch_size=config.batch_size, shuffle=True)
+    valid_loader = DataLoader(dataset=valid_datasets,
+                              batch_size=config.batch_size, shuffle=True)
     print("Train numbers:{:d}".format(len(train_datasets)))
 
     #=======================================
     #   2. Define network and Load model
     #=======================================
-    if  config.pretrained:
+    if config.pretrained:
         model = models.resnet101(num_classes=config.num_classes)
-        model.load_state_dict(torch.load(config.model_path))
+        checkpoint = torch.load(config.model_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
         print("load model success")
     else:
         model = models.resnet101(pretrained=True)
@@ -47,30 +51,34 @@ def main():
     # 3. Define Loss function and optimizer
     #=======================================
     criterion = nn.CrossEntropyLoss().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=config.lr, 
-        amsgrad=True, weight_decay=config.weight_decay)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 10, gamma=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=config.lr,
+                           amsgrad=True, weight_decay=config.weight_decay)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     #=======================================
     #     4. Train and Test the network
     #=======================================
-    # some parameters for K-fold and restart model
     best_accuracy = 0.
-    # start_epoch = 0
-    # best_precision = 0
-    # resume = False
-    
+    epoch = 0
+    resume = True
+
     # ====4.1 restart the training process====
-    # if resume:
-    #     checkpoint = torch.load(config.model_path)
-    #     model.load_state_dict(checkpoint['model_state_dict'])
-    #     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #     start_epoch = checkpoint["epoch"]
-    #     loss = checkpoint["loss"]
-    #     best_accuracy = checkpoint["best_accuracy"]
+    if resume:
+        checkpoint = torch.load(config.model_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        epoch = checkpoint["epoch"]
+        loss = checkpoint["loss"]
+        best_accuracy = checkpoint["best_accuracy"]
+        # print checkpoint
+        print('epoch:', epoch)
+        print('best_accuracy:', best_accuracy)
+        print("model's state_dict:")
+        for param_tensor in model.state_dict():
+            print(param_tensor, '\t', model.state_dict()[param_tensor].size())
 
     for epoch in range(1, config.epochs + 1):
-        
+
         # ====4.2 start training====
         model.train()
 
@@ -80,13 +88,13 @@ def main():
         sum_loss = 0.
         correct = 0.
         total = 0.
-        
+
         for images, labels in train_loader:
             # clear the cuda cache
             torch.cuda.empty_cache()
             images = images.to(device)
             labels = labels.to(device, dtype=torch.long)
-            
+
             # Forward pass
             outputs = model(images)
             loss = criterion(outputs, labels)
@@ -101,27 +109,27 @@ def main():
             total += labels.size(0)
             correct += (predicted == labels).sum()
             if index % 10 == 0:
-                print("Iter: %d ===> Loss: %.8f | Acc: %.3f%%" 
-                    % (index, sum_loss/index, 100. * correct / total))
+                print("Iter: %d ===> Loss: %.8f | Acc: %.3f%%"
+                      % (index, sum_loss / index, 100. * correct / total))
             index += 1
 
         end = time.time()
-        print("Epoch [%d/%d], Loss: %.8f, Time: %.1fsec!" 
-            % (epoch, config.epochs, loss.item(), (end-start)))
-        
+        print("Epoch [%d/%d], Loss: %.8f, Time: %.1fsec!"
+              % (epoch, config.epochs, loss.item(), (end - start)))
+
         # ====4.3 start evalidating====
         model.eval()
 
         correct_prediction = 0.
         total = 0
-        
+
         with torch.no_grad():
             for images, labels in valid_loader:
                 # clear the cuda cache
                 torch.cuda.empty_cache()
                 images = images.to(device)
                 labels = labels.to(device, dtype=torch.long)
-                
+
                 # print prediction
                 outputs = model(images)
                 _, predicted = torch.max(outputs.data, 1)
@@ -133,29 +141,25 @@ def main():
 
         accuracy = 100. * correct_prediction / total
         print("Accuracy: %.4f%%" % accuracy)
+        scheduler.step()
 
         if accuracy > best_accuracy:
             if not os.path.exists(config.checkpoint):
                 os.mkdir(config.checkpoint)
-            # Save the model checkpoint
-            torch.save(model.state_dict(), os.path.join("%s-%.3f.pth")
-                % (config.best_models, accuracy))
-            print("Model saved to %s" % (config.checkpoint))
-            best_accuracy = accuracy
-
             # save networks
-            # torch.save({
-            #     'epoch': epoch,
-            #     'model_state_dict': model.state_dict(),
-            #     'optimizer_state_dict': optimizer.state_dict(),
-            #     'loss': loss,
-            #     'best_accuracy': accuracy,
-            # }, os.path.join("%s-%.3f.pth") % (config.best_models, accuracy))
-            # print("save networks for epoch:", epoch)
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': loss,
+                'best_accuracy': accuracy,
+            }, os.path.join("%s-%.3f.pth") % (config.best_models, accuracy))
+            print("save networks for epoch:", epoch)
+            best_accuracy = accuracy
 
 
 if __name__ == '__main__':
-    
+
     ''' parse_argument
     parser = argparse.ArgumentParser(description='Plants Disease Detection')
     parser.add_argument("-n", "--num_classes", default=6, type=int)

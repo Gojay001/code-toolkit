@@ -6,7 +6,7 @@ import random
 import numpy as np
 import json
 
-from data_config import config
+from DataProcess.data_config import config
 
 
 def get_folders(train_data, test_data):
