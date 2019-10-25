@@ -5,6 +5,7 @@
 data/
 submit/
 video/
+images/
 
 # python cache
 __pycache__/
