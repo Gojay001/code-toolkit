@@ -7,6 +7,7 @@ Toolkit for deep learning.
         |- data_config.py
         |- data_loader.py
         |- divide_data.py
+        |- img2video.py
         |- img_resize.py
         |- video_extract.py
     |- utils/
@@ -25,6 +26,8 @@ DataProcess/**data_config.py** : config (hyper-)parameters.
 DataProcess/**data_loader.py** : load data to tensor of DataSet type.
 
 DataProcess/**divide_data.py** : divide data to train and valid files.    
+
+DataProcess/**img2video.py** : transform images set to video using opencv. 
 
 DataProcess/**img_resize.py** : resize images to specific size using opencv. 
 
