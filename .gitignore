@@ -2,6 +2,7 @@
 .DS_Store
 
 # project dirs
+.idea
 data/
 submit/
 video/
