@@ -31,6 +31,8 @@ def to_images(path_video, path_save):
                 cv2.imwrite(os.path.join(pic_path, '%06d.jpg'%count), frame)
                 cv2.waitKey(1)
                 count = count+1
+                if (count > 2000):
+                    break
 
             # get video info and save to .ini file
             fps =video.get(cv2.CAP_PROP_FPS)
