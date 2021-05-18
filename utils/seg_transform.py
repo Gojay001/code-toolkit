@@ -67,8 +67,7 @@ class ToTensor(object):
             raise (RuntimeError("transform.ToTensor() only handle np.ndarray label with 2 dims.\n"))
 
         image = torch.from_numpy(image.transpose((2, 0, 1)))
-        if isinstance(image, torch.ByteTensor):
-            image = image.float().div(255)
+        image = image.float().div(255)
         label = torch.from_numpy(label)
         if not isinstance(label, torch.LongTensor):
             label = label.long()

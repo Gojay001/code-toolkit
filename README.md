@@ -18,6 +18,7 @@ Toolkit for Deep Learning.
         |- bbox_iou.py
         |- bbox_iou_python.py
         |- BN_torch.py
+        |- dataset.py
         |- loss.py
         |- seg_transform.py
         |- show_img.py
@@ -53,6 +54,8 @@ utils/`bbox_iou.py` : calculate iou(Intersection-of-Union) between two bounding-
 utils/`bbox_iou_python.py` : calculate iou in python version.
 
 utils/`BN_torch.py` : implementation of BN(BatchNormalization) in PyTorch.
+
+utils/`dataset.py` : implementation of dataset in segmentation.
 
 utils/`loss.py` : implementation of loss function, including FocalLoss, BinaryDiceLoss.
 
