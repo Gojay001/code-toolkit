@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+# @Time   : 2021/5/16 上午12:08
+# @Author : gojay
+# @Contact: gao.jay@foxmail.com
+# @File   : loss.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

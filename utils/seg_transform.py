@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+# @Time   : 2021/5/16 上午10:22
+# @Author : gojay
+# @Contact: gao.jay@foxmail.com
+# @File   : seg_transform.py
+
 import random
 import math
 import numpy as np
@@ -111,6 +118,22 @@ class Normalize(object):
         else:
             for t, m, s in zip(image, self.mean, self.std):
                 t.sub_(m).div_(s)
+        return image, label
+
+
+class HistEqualize(object):
+    def __init__(self, p=0.5):
+        self.p = p
+
+    def __call__(self, image, label):
+        assert len(image.shape) == 2 or len(image.shape) == 3
+        if random.random() < self.p:
+            if len(image.shape) == 2:
+                image = cv2.equalizeHist(image)
+            else:
+                (R, G, B) = cv2.split(image)
+                [R, G, B] = [cv2.equalizeHist(channel) for channel in [R, G, B]]
+                image = cv2.merge([R, G, B])
         return image, label
 
 
@@ -336,6 +359,7 @@ class BGR2RGB(object):
 
 if __name__ == '__main__':
     from utils.show_img import plt_show, cv2_show
+    import matplotlib.pyplot as plt
 
     img = cv2.imread('../images/img.jpg', cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -343,11 +367,22 @@ if __name__ == '__main__':
     # label[label > 0] = 1
     # plt_show(label)
 
+    # ========== HistEqualize ==============
+    # plt.hist(img.ravel(), 256, [0, 256], color='r')
+    # plt.show()
+    # plt_show(img)
+    # transform = HistEqualize(p=1)
+    # dst, label = transform(img, label)
+    # plt.hist(dst.ravel(), 256, [0, 256], color='r')
+    # plt.show()
+    # plt_show(dst)
+
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
-    pad_value = [item*255 for item in mean]
+    pad_value = [item * 255 for item in mean]
 
     train_transform = Compose([
+        HistEqualize(),
         RandScale([0.9, 1.1]),
         RandRotate([-10, 10], padding=pad_value, ignore_label=255),
         RandomGaussianBlur(),
@@ -361,7 +396,7 @@ if __name__ == '__main__':
         Resize(size=(473, 473)),
         ToTensor(),
         Normalize(mean=mean, std=std)
-        ])
+    ])
 
     img, label = train_transform(img, label)
     # img, label = val_transform(img, label)
@@ -369,4 +404,3 @@ if __name__ == '__main__':
     print(label, label.max(), label.min(), label.shape)
     # cv2_show(img)
     # cv2_show(label)
-

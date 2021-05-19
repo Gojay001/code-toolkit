@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+# @Time   : 2021/5/18 上午12:11
+# @Author : gojay
+# @Contact: gao.jay@foxmail.com
+# @File   : show_img.py
+
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
