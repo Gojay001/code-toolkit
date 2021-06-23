@@ -174,11 +174,29 @@ class BinaryDiceLoss(nn.Module):
             raise Exception('Unexpected reduction {}'.format(self.reduction))
 
 
+class ComposeLoss(nn.Module):
+    def __init__(self):
+        super(ComposeLoss, self).__init__()
+        self.focal_loss = FocalLossV1()
+        self.dice_loss = BinaryDiceLoss()
+        self.bce_loss = nn.BCEWithLogitsLoss()
+
+    def forward(self, predict, target):
+        loss1 = self.focal_loss(predict, target)
+        loss2 = self.dice_loss(predict, target)
+        loss3 = self.bce_loss(predict, target)
+        return loss1 + loss2 + loss3
+
+
 if __name__ == '__main__':
     criterion1 = FocalLossV1()
     criterion2 = BinaryDiceLoss()
-    preds = torch.randn(8, 2, 384, 384)  # NCHW, float/half
-    label = torch.randint(0, 2, (8, 2, 384, 384))  # NCHW, int64_t
+    criterion3 = nn.BCEWithLogitsLoss()
+    criterion4 = ComposeLoss()
+    preds = torch.randn(8, 2, 384, 384)
+    label = torch.randint(0, 2, (8, 2, 384, 384)).float()
     loss1 = criterion1(preds, label)
     loss2 = criterion2(preds, label)
-    print(loss1, loss2)
+    loss3 = criterion3(preds, label)
+    loss4 = criterion4(preds, label)
+    print(loss1, loss2, loss3, loss4)
