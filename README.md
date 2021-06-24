@@ -14,6 +14,7 @@ Toolkit for Deep Learning.
     | - model/
         |- vgg.py
         |- resnet.py
+        |- densenet.py
         |- fcn8s.py
         |- unet.py
         |- pspnet.py
@@ -62,7 +63,9 @@ DataProcess/`video_extract.py` : extract each frame of video to images file.
 
 model/`vgg.py` : ICLR(2015) [paper](https://arxiv.org/abs/1409.1556).
 
-utils/`resnet.py` : CVPR(2016) [paper](http://openaccess.thecvf.com/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf).
+model/`resnet.py` : CVPR(2016) [paper](http://openaccess.thecvf.com/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf).
+
+model/`densenet.py` : CVPR(2017) [paper](https://openaccess.thecvf.com/content_cvpr_2017/papers/Huang_Densely_Connected_Convolutional_CVPR_2017_paper.pdf).
 
 model/`fcn8s.py` : CVPR(2015) [paper](https://www.cv-foundation.org/openaccess/content_cvpr_2015/papers/Long_Fully_Convolutional_Networks_2015_CVPR_paper.pdf).
 
