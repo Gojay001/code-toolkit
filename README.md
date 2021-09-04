@@ -82,6 +82,11 @@ model/`JL_DCF.py` : CVPR(2020) [paper](https://openaccess.thecvf.com/content_CVP
 model/`swin transformer` : arXiv(2021) [paper](https://arxiv.org/abs/2103.14030).
 
 
+## source-code
+
+source-code/`SoftMax.py` : SoftMax and etc. by numpy implementation.
+
+
 ## utils
 
 utils/nms/`nms_cpu.py` : remove useless bounding-box by nms(Non-maximum suppression).
