@@ -102,6 +102,8 @@ utils/`count_nrom.py` : count the mean and the standard deviation from datasets.
 
 utils/`dataset.py` : implementation of dataset in segmentation.
 
+utils/`logging_util.py` : implementation of logging module with formatting.
+
 utils/`loss.py` : implementation of loss function, including FocalLoss, BinaryDiceLoss.
 
 utils/`seg_transform.py` : implementation of transform module in segmentation.
