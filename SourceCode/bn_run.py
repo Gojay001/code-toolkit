@@ -1,11 +1,10 @@
-import time
 import torch
-import torchvision
-import torch.nn as nn
-import sys
-import torchvision.transforms as transforms
-from torch.utils.data.dataloader import DataLoader
-import torch.functional as F
+from torch import nn
+from torchvision import transforms, datasets
+from torch.utils.data import DataLoader
+
+import time
+import os
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -65,39 +64,6 @@ class FlattenLayer(nn.Module):  # 自己定义层Flattenlayer
     def forward(self, x):  # x shape: (batch, *, *, ...)
         return x.view(x.shape[0], -1)
 
-net = nn.Sequential(
-            nn.Conv2d(1, 6, kernel_size=5),
-            BatchNorm(6, num_dims=4),
-            nn.Sigmoid(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(6, 16, kernel_size=5),
-            BatchNorm(16, num_dims=4),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            FlattenLayer(),
-            nn.Linear(16*4*4, 120),
-            BatchNorm(120, num_dims=2),
-            nn.Sigmoid(),
-            nn.Linear(120, 84),
-            BatchNorm(84, num_dims=2),
-            nn.Sigmoid(),
-            nn.Linear(84, 10)
-        )
-net = net.to(device)
-
-#get Data
-batch_size = 256
-transform = transforms.Compose([transforms.ToTensor()])
-train_set = torchvision.datasets.FashionMNIST(root='~/Datasets/FashionMNIST',
-                                              train=True, transform=transform)
-test_set = torchvision.datasets.FashionMNIST(root='~/Datasets/FashionMNIST',
-                                             train=False, transform=transform)
-train_iter = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0)
-test_iter = DataLoader(test_set, batch_size=batch_size, shuffle=True, num_workers=0)
-
-lr, num_epochs = 0.001, 5
-loss = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 
 # evaluate_accuracy
 def evaluate_accuracy(test_iterator, net):
@@ -118,23 +84,56 @@ def evaluate_accuracy(test_iterator, net):
         return test_acc
 
 def train(num_epoch):
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
     for epoch in range(num_epoch):
-        l_sum, train_acc_sum, ncount, start = 0.0, 0.0, 0, time.time()
+        loss_sum, train_acc_sum, ncount, start = 0.0, 0.0, 0, time.time()
         for x_train, y_train in train_iter:
             x_train = x_train.to(device)
             y_train = y_train.to(device)
-            y_hat = net(x_train)
-            l = loss(y_hat, y_train)
+            y_hat = model(x_train)
+            loss = criterion(y_hat, y_train)
             optimizer.zero_grad()
-            l.backward()
+            loss.backward()
             optimizer.step()
-            l_sum += l.cpu().item()
+            loss_sum += loss.cpu().item() * batch_size
             train_acc_sum += (y_hat.argmax(dim=1) == y_train).sum().cpu().item()
             ncount += y_train.shape[0]
-        test_acc = evaluate_accuracy(test_iter, net)
+        test_acc = evaluate_accuracy(test_iter, model)
         print('epoch: %d, train_loss: %.4f, train_acc: %.4f, test_acc: %.4f , spend_time: %.4f' %
-              (epoch+1, l_sum/ncount,train_acc_sum/ncount, test_acc,time.time()-start))
+              (epoch+1, loss_sum/ncount,train_acc_sum/ncount, test_acc,time.time()-start))
 
 
 if __name__ == "__main__":
+    model = nn.Sequential(
+        nn.Conv2d(1, 6, kernel_size=5),
+        BatchNorm(6, num_dims=4),
+        nn.Sigmoid(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        nn.Conv2d(6, 16, kernel_size=5),
+        BatchNorm(16, num_dims=4),
+        nn.ReLU(inplace=True),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+        FlattenLayer(),
+        nn.Linear(16*4*4, 120),
+        BatchNorm(120, num_dims=2),
+        nn.Sigmoid(),
+        nn.Linear(120, 84),
+        BatchNorm(84, num_dims=2),
+        nn.Sigmoid(),
+        nn.Linear(84, 10)
+    )
+    model = model.to(device)
+
+    #get Data
+    batch_size = 8
+    transform = transforms.Compose([transforms.ToTensor()])
+    train_set = datasets.MNIST(root='../data', download=True,
+                               train=True, transform=transform)
+    test_set = datasets.MNIST(root='../data', download=True,
+                              train=False, transform=transform)
+    train_iter = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0)
+    test_iter = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=0)
+
     train(num_epoch=5)
