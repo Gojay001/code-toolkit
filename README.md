@@ -30,6 +30,7 @@ Toolkit for Deep Learning.
         |- bbox_iou.py
         |- bbox_iou_python.py
         |- BN_torch.py
+        |- count_norm.py
         |- dataset.py
         |- loss.py
         |- seg_transform.py
@@ -82,9 +83,11 @@ model/`JL_DCF.py` : CVPR(2020) [paper](https://openaccess.thecvf.com/content_CVP
 model/`swin transformer` : arXiv(2021) [paper](https://arxiv.org/abs/2103.14030).
 
 
-## source-code
+# SourceCode
 
-source-code/`SoftMax.py` : SoftMax and etc. by numpy implementation.
+SourceCode/`bn_details.py` : implementation of BN(BatchNormalization) and analysis of its details.
+
+SourceCode/`bn_details.py` : implementation of BN(BatchNormalization) and simulation of running.
 
 
 ## utils
@@ -95,9 +98,11 @@ utils/`bbox_iou.py` : calculate iou(Intersection-of-Union) between two bounding-
 
 utils/`bbox_iou_python.py` : calculate iou in python version.
 
-utils/`BN_torch.py` : implementation of BN(BatchNormalization) in PyTorch.
+utils/`count_nrom.py` : count the mean and the standard deviation from datasets.
 
 utils/`dataset.py` : implementation of dataset in segmentation.
+
+utils/`logging_util.py` : implementation of logging module with formatting.
 
 utils/`loss.py` : implementation of loss function, including FocalLoss, BinaryDiceLoss.
 
