@@ -1,13 +1,13 @@
-# MacOS
+# MacOS (all suffixes)
 .DS_Store
 
-# project dirs
+# project dirs (root directory)
 .idea
-data/
-submit/
-video/
-images/
-imgs/
+/data
+/submit
+/video
+/images
+/imgs
 
-# python cache
+# python cache (all directory)
 __pycache__/
