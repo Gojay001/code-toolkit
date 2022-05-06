@@ -3,7 +3,7 @@
 # @Time   : 2021/9/15 下午5:44
 # @Author : gojay
 # @Contact: gao.jay@foxmail.com
-# @File   : custom_net.py
+# @File   : test_net.py
 
 import torch
 from torch import nn

@@ -7,6 +7,7 @@ data/
 submit/
 video/
 images/
+imgs/
 
 # python cache
 __pycache__/

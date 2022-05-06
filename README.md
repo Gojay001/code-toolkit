@@ -2,15 +2,6 @@
 Toolkit for Deep Learning.
 ```
 .
-    |- DataProcess/
-        |- data_aug.py
-        |- data_config.py
-        |- data_loader.py
-        |- data_select.py
-        |- divide_data.py
-        |- img2video.py
-        |- img_resize.py
-        |- video_extract.py
     | - model/
         |- vgg.py
         |- resnet.py
@@ -22,8 +13,18 @@ Toolkit for Deep Learning.
         |- DualGCN.py
         |- JL_DCF.py
         |- swin transformer (swin_transformer_seg.py, mlp_decoder.py)
-
+    |- source-code/
+        |- bn_details.py
+        |- bn_run.py
+        |- CrossEntropyLoss.py
+        |- regularization.py
+        |- SoftMax.py
     |- utils/
+        |- data
+            |- data_config.py
+            |- divide_data.py
+            |- img_ops.py
+            |- imgs2video.py
         |- nms
             |- nms_cpu.py
             |- ...
@@ -37,27 +38,9 @@ Toolkit for Deep Learning.
         |- show_img.py
     |- README.md
     |- test.py
+    |- test_net.py
     |- train.py
 ```
-
-
-## DataProcess
-
-DataProcess/`data_aug.py` : augment data with transforms to aug file.
-
-DataProcess/`data_config.py` : config (hyper-)parameters.
-
-DataProcess/`data_loader.py` : load data to tensor of DataSet type.
-
-DataProcess/`data_select.py` : select data in various ways.
-
-DataProcess/`divide_data.py` : divide data to train and valid files.    
-
-DataProcess/`img2video.py` : transform images set to video using opencv. 
-
-DataProcess/`img_resize.py` : resize images to specific size using opencv. 
-
-DataProcess/`video_extract.py` : extract each frame of video to images file. 
 
 
 ## model
@@ -83,14 +66,34 @@ model/`JL_DCF.py` : CVPR(2020) [paper](https://openaccess.thecvf.com/content_CVP
 model/`swin transformer` : arXiv(2021) [paper](https://arxiv.org/abs/2103.14030).
 
 
-# SourceCode
+## source-code
 
-SourceCode/`bn_details.py` : implementation of BN(BatchNormalization) and analysis of its details.
+source-code/`bn_details.py` : implementation of BN(BatchNormalization) and analysis of its details.
 
-SourceCode/`bn_details.py` : implementation of BN(BatchNormalization) and simulation of running.
+source-code/`bn_run.py` : implementation of BN(BatchNormalization) and simulation of running.
+
+source-code/`CrossEntropyLoss.py` : implementation of custom CrossEntropyLoss and BCELoss.
+
+source-code/`regularization.py` : implementation of L1/L2 normalization, L1/L2 regularization and Dropout.
+
+source-code/`SoftMax.py` : implementation of SoftMax function in various version.
 
 
 ## utils
+
+utils/data/`count_nrom.py` : count the mean and the standard deviation from datasets.
+
+utils/data/`data_config.py` : config (hyper-)parameters in main.py.
+
+utils/data/`dataset.py` : implementation of dataset in segmentation.
+
+utils/data/`divide_data.py` : divide origin data into train and valid set.
+
+utils/data/`img_ops.py` : resize, hist equalize and blur images using opencv. 
+
+utils/data/`imgs2video.py` : convert images to video and extract images from video.
+
+utils/data/`seg_transform.py` : implementation of transform module in segmentation.
 
 utils/nms/`nms_cpu.py` : remove useless bounding-box by nms(Non-maximum suppression).
 
@@ -98,15 +101,9 @@ utils/`bbox_iou.py` : calculate iou(Intersection-of-Union) between two bounding-
 
 utils/`bbox_iou_python.py` : calculate iou in python version.
 
-utils/`count_nrom.py` : count the mean and the standard deviation from datasets.
-
-utils/`dataset.py` : implementation of dataset in segmentation.
-
 utils/`logging_util.py` : implementation of logging module with formatting.
 
 utils/`loss.py` : implementation of loss function, including FocalLoss, BinaryDiceLoss.
-
-utils/`seg_transform.py` : implementation of transform module in segmentation.
 
 utils/`show_img.py` : visualize image in both plt(matplotlib.pyplot) and cv2(opencv).
 
