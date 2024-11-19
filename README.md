@@ -34,6 +34,7 @@ Toolkit for coding, including deep learning, image processing, file processing.
             |- ...
         |- bbox_iou.py
         |- bbox_iou_python.py
+        |- img2video.py
         |- BN_torch.py
         |- count_norm.py
         |- dataset.py
@@ -102,6 +103,8 @@ utils/nms/`nms_cpu.py` : remove useless bounding-box by nms(Non-maximum suppress
 utils/`bbox_iou.py` : calculate iou(Intersection-of-Union) between two bounding-box.
 
 utils/`bbox_iou_python.py` : calculate iou in python version.
+
+utils/`imgs2video.py` : convert images to video and extract images from video.
 
 utils/`logging_util.py` : implementation of logging module with formatting.
 
