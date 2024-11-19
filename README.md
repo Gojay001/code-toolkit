@@ -1,8 +1,14 @@
 # Toolkit
-Toolkit for Deep Learning.
+Toolkit for coding, including deep learning, image processing, file processing.
 ```
 .
-    | - model/
+    |- source-code/
+        |- bn_details.py
+        |- bn_run.py
+        |- CrossEntropyLoss.py
+        |- regularization.py
+        |- SoftMax.py
+    | - torch_model/
         |- vgg.py
         |- resnet.py
         |- densenet.py
@@ -13,12 +19,10 @@ Toolkit for Deep Learning.
         |- DualGCN.py
         |- JL_DCF.py
         |- swin transformer (swin_transformer_seg.py, mlp_decoder.py)
-    |- source-code/
-        |- bn_details.py
-        |- bn_run.py
-        |- CrossEntropyLoss.py
-        |- regularization.py
-        |- SoftMax.py
+    |- torch_template
+        |- test_net.py
+        |- test.py
+        |- train.py
     |- utils/
         |- data
             |- data_config.py
@@ -37,13 +41,24 @@ Toolkit for Deep Learning.
         |- seg_transform.py
         |- show_img.py
     |- README.md
-    |- test.py
-    |- test_net.py
-    |- train.py
+
 ```
 
 
-## model
+## source_code
+
+source-code/`bn_details.py` : implementation of BN(BatchNormalization) and analysis of its details.
+
+source-code/`bn_run.py` : implementation of BN(BatchNormalization) and simulation of running.
+
+source-code/`CrossEntropyLoss.py` : implementation of custom CrossEntropyLoss and BCELoss.
+
+source-code/`regularization.py` : implementation of L1/L2 normalization, L1/L2 regularization and Dropout.
+
+source-code/`SoftMax.py` : implementation of SoftMax function in various version.
+
+
+## torch_model
 
 model/`vgg.py` : ICLR(2015) [paper](https://arxiv.org/abs/1409.1556).
 
@@ -66,19 +81,6 @@ model/`JL_DCF.py` : CVPR(2020) [paper](https://openaccess.thecvf.com/content_CVP
 model/`swin transformer` : arXiv(2021) [paper](https://arxiv.org/abs/2103.14030).
 
 
-## source-code
-
-source-code/`bn_details.py` : implementation of BN(BatchNormalization) and analysis of its details.
-
-source-code/`bn_run.py` : implementation of BN(BatchNormalization) and simulation of running.
-
-source-code/`CrossEntropyLoss.py` : implementation of custom CrossEntropyLoss and BCELoss.
-
-source-code/`regularization.py` : implementation of L1/L2 normalization, L1/L2 regularization and Dropout.
-
-source-code/`SoftMax.py` : implementation of SoftMax function in various version.
-
-
 ## utils
 
 utils/data/`count_nrom.py` : count the mean and the standard deviation from datasets.
@@ -89,7 +91,7 @@ utils/data/`dataset.py` : implementation of dataset in segmentation.
 
 utils/data/`divide_data.py` : divide origin data into train and valid set.
 
-utils/data/`img_ops.py` : resize, hist equalize and blur images using opencv. 
+utils/data/`img_ops.py` : resize, hist equalize and blur images using opencv.
 
 utils/data/`imgs2video.py` : convert images to video and extract images from video.
 
