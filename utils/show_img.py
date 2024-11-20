@@ -1,9 +1,13 @@
-#!/usr/bin/env python3
-# encoding: utf-8
-# @Time   : 2021/5/18 上午12:11
-# @Author : gojay
-# @Contact: gao.jay@foxmail.com
-# @File   : show_img.py
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+@author      : Gao Jie
+@date        : 2024-05-18
+@file        : show_img.py
+@description : show image functions, for tensor now
+@version     : 1.0
+"""
 
 import matplotlib.pyplot as plt
 import numpy as np
