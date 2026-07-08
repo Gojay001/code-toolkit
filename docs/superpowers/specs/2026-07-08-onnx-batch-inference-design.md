@@ -26,15 +26,15 @@
 imgs/0.png, 22.png
         │
         ▼
-onnx_preprocess.py  ←── onnx_configs.py (per-model config)
-        │                      │
-        │              source_code/alignment/*
-        │              source_code/detector/bvt_face_detector.py
+src/onnx_preprocess.py  ←── src/onnx_configs.py (per-model config)
+        │                           │
+        │                   src/alignment/*
+        │                   src/detector/bvt_face_detector.py
         ▼
    NCHW float32 tensors
         │
         ▼
-run_all_onnx.py  ──► onnxruntime InferenceSession
+src/run_all_onnx.py  ──► onnxruntime InferenceSession
         │
         ├── results/{model}.png / .json
         ├── results/_preprocessed/{model}_*.png
@@ -47,18 +47,18 @@ run_all_onnx.py  ──► onnxruntime InferenceSession
 code-toolkit/
 ├── 3rdparty/
 │   └── BVT-1.48.0-cp310-cp310-linux_x86_64.whl   # BVT SDK
-├── source_code/
+├── src/                    # 全部脚本代码
 │   ├── alignment/          # 从 ~/Documents/gan_effect vendoring
 │   │   ├── face_alignment.py
 │   │   ├── beard_alignment.py
 │   │   ├── eyebrow_alignment.py
 │   │   └── eyelid_alignment.py
-│   └── detector/
-│       └── bvt_face_detector.py
-├── utils/
+│   ├── detector/
+│   │   └── bvt_face_detector.py
 │   ├── onnx_configs.py     # MODEL_CONFIGS
 │   ├── onnx_preprocess.py  # 统一前处理
-│   └── run_all_onnx.py     # CLI 入口
+│   ├── run_all_onnx.py     # CLI 入口
+│   └── __init__.py         # 包标识（可选，便于 import）
 ├── models/*.onnx
 ├── imgs/0.png, 22.png
 └── results/
@@ -69,7 +69,7 @@ code-toolkit/
 
 **Vendoring 范围：** 仅拷贝上述 5 个 Python 文件；不拷贝 `landmarks_detector.py`（全部模型使用 BVT 检测）。
 
-**Import 路径：** vendored 模块放在 `source_code/` 下，推理脚本通过 `sys.path` 或相对 import 引用，保持与 `gan_effect` 内模块逻辑一致。
+**Import 路径：** 全部脚本放在 `src/` 下；vendored 模块用包内相对 import（如 `from src.alignment.beard_alignment import image_align_run`），或从项目根目录以 `python src/run_all_onnx.py` 运行并在入口添加 repo root 到 `sys.path`。
 
 ## BVT 依赖
 
@@ -80,7 +80,7 @@ code-toolkit/
 
 ## 模型配置 Schema
 
-`utils/onnx_configs.py` 中每个模型一条 dict：
+`src/onnx_configs.py` 中每个模型一条 dict：
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -169,7 +169,7 @@ code-toolkit/
 ## CLI 接口
 
 ```bash
-python utils/run_all_onnx.py \
+python src/run_all_onnx.py \
   --models-dir models \
   --imgs-dir imgs \
   --results-dir results \
@@ -203,7 +203,7 @@ BVT             # 从 3rdparty wheel 安装
 ## 测试验证
 
 1. Linux cp310 环境安装 BVT wheel + 依赖
-2. 运行 `python utils/run_all_onnx.py`
+2. 运行 `python src/run_all_onnx.py`
 3. 检查：
    - `results/` 下 5 张 png + 1 个 json
    - `results/_preprocessed/` 有中间对齐图
@@ -211,8 +211,8 @@ BVT             # 从 3rdparty wheel 安装
 
 ## 实现顺序（供 writing-plans 使用）
 
-1. Vendoring alignment + detector 模块到 `source_code/`
-2. 编写 `onnx_configs.py`
-3. 编写 `onnx_preprocess.py`
-4. 编写 `run_all_onnx.py`（推理 + 后处理 + 文档生成）
+1. Vendoring alignment + detector 模块到 `src/`
+2. 编写 `src/onnx_configs.py`
+3. 编写 `src/onnx_preprocess.py`
+4. 编写 `src/run_all_onnx.py`（推理 + 后处理 + 文档生成）
 5. 在 Linux 环境端到端验证
