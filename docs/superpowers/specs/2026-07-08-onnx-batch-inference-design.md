@@ -29,7 +29,7 @@ imgs/0.png, 22.png
 src/onnx_preprocess.py  ←── src/onnx_configs.py (per-model config)
         │                           │
         │                   src/alignment/*
-        │                   src/detector/bvt_face_detector.py
+        │                   src/detector/  (bvt + dlib，按平台选用)
         ▼
    NCHW float32 tensors
         │
@@ -52,9 +52,12 @@ code-toolkit/
 │   │   ├── face_alignment.py
 │   │   ├── beard_alignment.py
 │   │   ├── eyebrow_alignment.py
-│   │   └── eyelid_alignment.py
+│   │   ├── eyelid_alignment.py
+│   │   └── org_alignment.py                 # dlib 通用人脸对齐回退
 │   ├── detector/
-│   │   └── bvt_face_detector.py
+│   │   ├── bvt_face_detector.py
+│   │   ├── landmarks_detector.py              # dlib，非 Linux 回退
+│   │   └── shape_predictor_68_face_landmarks.dat
 │   ├── onnx_configs.py     # MODEL_CONFIGS
 │   ├── onnx_preprocess.py  # 统一前处理
 │   ├── run_all_onnx.py     # CLI 入口
@@ -67,16 +70,22 @@ code-toolkit/
     └── MODELS.md
 ```
 
-**Vendoring 范围：** 仅拷贝上述 5 个 Python 文件；不拷贝 `landmarks_detector.py`（全部模型使用 BVT 检测）。
+**Vendoring 范围：** alignment 模块 5 个（含 `org_alignment.py` 作 dlib 回退）+ detector 2 个 + dlib dat 文件。
 
-**Import 路径：** 全部脚本放在 `src/` 下；vendored 模块用包内相对 import（如 `from src.alignment.beard_alignment import image_align_run`），或从项目根目录以 `python src/run_all_onnx.py` 运行并在入口添加 repo root 到 `sys.path`。
+**Import 路径：** 全部脚本放在 `src/` 下；vendored 模块用包内相对 import，或从项目根目录以 `python src/run_all_onnx.py` 运行并在入口添加 repo root 到 `sys.path`。
 
-## BVT 依赖
+## 依赖与平台策略
+
+| 环境 | 检测/对齐 | 安装方式 |
+|------|-----------|----------|
+| Linux | BVT + 模型专用 alignment | 若 `import BVT` 失败，自动 `pip install 3rdparty/BVT-1.48.0-cp310-cp310-linux_x86_64.whl` |
+| 非 Linux（macOS 等） | dlib + alignment（`detector='dlib'`） | `pip install dlib`；dat 文件随 repo 提供 |
 
 - Wheel 路径：`3rdparty/BVT-1.48.0-cp310-cp310-linux_x86_64.whl`
-- 安装方式：文档/脚本说明中要求 `pip install 3rdparty/BVT-1.48.0-cp310-cp310-linux_x86_64.whl`
-- Python 版本：cp310（与 wheel 匹配）
-- 平台：linux x86_64（当前 wheel 为 Linux 构建；macOS 本地无法直接安装该 wheel，需在 Linux cp310 环境运行）
+- Python 版本：cp310（与 BVT wheel 匹配）
+- BVT 仅 Linux x86_64；非 Linux 不尝试安装 BVT
+
+**dlib 回退说明：** `beard` / `face` / `eyelid` 的 alignment 模块源码仅支持 BVT。非 Linux 下对这些模型使用 `org_alignment.image_align_run(..., detector='dlib')` 作通用人脸对齐回退；`eyebrow` 可直接用 `eyebrow_alignment(..., detector='dlib')`。BVT 与 dlib 对齐结果可能有差异，文档中需记录实际使用的 detector。
 
 ## 模型配置 Schema
 
@@ -85,7 +94,6 @@ code-toolkit/
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `align` | str | `beard` / `eyebrow` / `eyelid` / `face` / `none` |
-| `detector` | str | 固定 `bvt` |
 | `align_size` | int | `image_align_run(..., output_size=...)` |
 | `input_size` | (H, W) | 对齐后二次 resize 到模型输入尺寸 |
 | `normalize` | str | `minus1_1` → `(x/255)*2-1` |
@@ -112,18 +120,73 @@ code-toolkit/
 
 **gender_race：** 不做 face alignment，仅 resize 到 128×128 + normalize。
 
-**eyebrow：** 使用 BVT detector + `eyebrow_alignment.image_align_run(..., detector='bvt')`；推理时只需单张输入图（无 mask/gt 分支），对齐后 resize 到 (128, 256)。
+**eyebrow：** Linux 用 BVT + `detector='bvt'`；非 Linux 用 dlib + `detector='dlib'`。
 
 ## 预处理流水线
 
 统一入口：`preprocess_model(config, imgs_dir, preprocessed_dir) -> dict[str, np.ndarray]`
 
+### 决策流程（每张输入图独立判断）
+
+```
+加载 PIL RGB 图像
+        │
+        ▼
+图像 (W,H) 是否 == config.input_size 的 (W,H)？
+        │
+   是 ──┴── 否
+   │         │
+   │         ▼
+   │    sys.platform.startswith("linux")？
+   │         │
+   │    是 ──┴── 否
+   │    │         │
+   │    │         ▼
+   │    │    dlib LandmarksDetector 检测
+   │    │    按 align 类型对齐（见下表）
+   │    │
+   │    ▼
+   │    ensure_bvt_installed()   # pip install 3rdparty wheel
+   │    BVTFaceDetector 检测
+   │    按 align 类型对齐（模型专用 alignment）
+   │
+   ▼
+跳过 alignment / 裁剪
+        │
+        ▼
+（若尺寸仍与 input_size 不完全一致则 PIL resize）
+        │
+        ▼
+Normalize → NCHW float32
+        │
+        ▼
+保存中间图到 results/_preprocessed/
+```
+
+**尺寸匹配规则：** `config.input_size = (H, W)`，PIL `Image.size = (W, H)`；两者宽高分别相等视为匹配，跳过 alignment。`align=none`（gender_race）同样适用：128×128 直接 normalize，否则 resize 后 normalize。
+
+**face_swap：** source / target 各自独立走上述流程。
+
+### 对齐路由表
+
+| align | Linux (BVT) | 非 Linux (dlib) |
+|-------|---------------|-----------------|
+| beard | `beard_alignment.image_align_run(..., detector='bvt')` | `org_alignment.image_align_run(..., detector='dlib')` |
+| eyebrow | `eyebrow_alignment(..., detector='bvt')` | `eyebrow_alignment(..., detector='dlib')` |
+| eyelid | `eyelid_alignment` 左右眼 crop + 拼接 | `org_alignment` 全脸对齐到 `align_size`，再 resize 到 `input_size` |
+| face | `face_alignment(..., detector='bvt')` | `org_alignment(..., detector='dlib')` |
+| none | 不检测、不对齐 | 不检测、不对齐 |
+
+### 步骤摘要
+
 1. **加载图像** — PIL RGB
-2. **人脸检测** — `BVTFaceDetector.get_landmarks()`，取第一张脸；无脸则 raise，上层 catch 并标记 failed
-3. **Alignment** — 按 `config.align` 调用对应 `image_align_run`
-4. **Resize** — PIL resize 到 `input_size` (H, W)
-5. **Normalize** — HWC → NCHW float32，`minus1_1`
-6. **保存中间图** — 写入 `results/_preprocessed/{model_name}.png`（face_swap 写 `{model}_source.png` 和 `{model}_target.png`）
+2. **尺寸检查** — 匹配则跳过检测与 alignment
+3. **平台分支** — Linux 装/用 BVT；否则 dlib
+4. **人脸检测** — 取第一张脸；无脸则 raise，上层 catch 并标记 failed
+5. **Alignment** — 按上表路由
+6. **Resize** — 必要时 PIL resize 到 `input_size`
+7. **Normalize** — HWC → NCHW float32，`minus1_1`
+8. **保存中间图** — `results/_preprocessed/{model_name}.png`（face_swap 写 `_source` / `_target` 后缀）；跳过 alignment 时保存原图副本
 
 ## 推理与后处理
 
@@ -162,7 +225,7 @@ code-toolkit/
 
 1. **模型文件** — 路径、文件大小
 2. **ONNX I/O** — 从 `session.get_inputs()` / `get_outputs()` 读取 name、shape、dtype
-3. **预处理** — 从 config 生成人类可读说明（alignment 类型、align_size、input_size、normalize、输入图）
+3. **预处理** — 是否跳过 alignment、实际 detector（bvt/dlib/skipped）、align 类型、input_size、normalize、输入图
 4. **后处理** — 图像保存路径或 JSON 格式说明
 5. **本次运行结果** — success/failed、输出文件路径、错误信息（如有）
 
@@ -185,6 +248,8 @@ python src/run_all_onnx.py \
 | 场景 | 行为 |
 |------|------|
 | 未检测到人脸 | 跳过该模型，`MODELS.md` 标注 failed |
+| BVT 安装失败（Linux） | 该模型 failed，日志输出 pip 错误 |
+| dlib 未安装（非 Linux） | 该模型 failed，提示 `pip install dlib` |
 | ONNX 推理异常 | 捕获异常，继续下一个模型 |
 | 未知 .onnx 文件 | warn 并跳过 |
 | 输入图不存在 | 启动时 fail fast |
@@ -196,23 +261,36 @@ onnxruntime
 numpy
 Pillow
 scipy
-opencv-python   # 可选，若 alignment 模块未用到可不装
-BVT             # 从 3rdparty wheel 安装
+dlib                        # 非 Linux 必须
+BVT                         # Linux，从 3rdparty wheel 自动或手动安装
+```
+
+`ensure_bvt_installed()` 实现要点：
+
+```python
+def ensure_bvt_installed(wheel_path: str) -> None:
+    try:
+        import BVT
+        return
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", wheel_path])
 ```
 
 ## 测试验证
 
-1. Linux cp310 环境安装 BVT wheel + 依赖
-2. 运行 `python src/run_all_onnx.py`
-3. 检查：
+1. **Linux cp310**：输入非对齐大图 → 自动装 BVT → 模型专用 alignment → 推理成功
+2. **Linux cp310**：输入已是 `input_size` 的图 → 跳过 alignment，仅 normalize
+3. **macOS**：输入非对齐大图 → dlib 回退 alignment → 推理成功（eyebrow/face/beard；eyelid 走 org_alignment 回退）
+4. 运行 `python src/run_all_onnx.py`
+5. 检查：
    - `results/` 下 5 张 png + 1 个 json
    - `results/_preprocessed/` 有中间对齐图
    - `results/MODELS.md` 覆盖 6 个模型的 I/O 与预处理说明
 
 ## 实现顺序（供 writing-plans 使用）
 
-1. Vendoring alignment + detector 模块到 `src/`
+1. Vendoring alignment + detector 模块到 `src/`（含 org_alignment、dlib dat）
 2. 编写 `src/onnx_configs.py`
-3. 编写 `src/onnx_preprocess.py`
+3. 编写 `src/onnx_preprocess.py`（尺寸检查 + 平台分支 + ensure_bvt_installed）
 4. 编写 `src/run_all_onnx.py`（推理 + 后处理 + 文档生成）
-5. 在 Linux 环境端到端验证
+5. Linux 与 macOS 分别端到端验证
