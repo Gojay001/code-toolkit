@@ -1,11 +1,10 @@
 
 import numpy as np
 
-import BVT
-
 class BVTFaceDetector:
 
     def __init__(self):
+        import BVT
         self.det = BVT.Engine()
         self.det.init_humanface_module(faceDetection=True, faceLandmark=True, advancedLandmark=True, attribute=True, iris=True)
 
