@@ -51,7 +51,6 @@ from src.alignment import (
     eyebrow_alignment,
     eyelid_alignment,
     face_alignment,
-    org_alignment,
 )
 from src.detector.bvt_face_detector import BVTFaceDetector
 from src.detector.landmarks_detector import LandmarksDetector
@@ -85,12 +84,12 @@ def _first_face_landmarks(img: Image.Image, use_bvt: bool):
     return faces[0]
 
 
-def _align_eyelid_bvt(img: Image.Image, landmarks, align_size: int) -> Image.Image:
+def _align_eyelid(img: Image.Image, landmarks, align_size: int, detector: str) -> Image.Image:
     _, left = eyelid_alignment.image_align_run(
-        img, landmarks, output_size=align_size, crop_eye="left_eye", detector="bvt"
+        img, landmarks, output_size=align_size, crop_eye="left_eye", detector=detector
     )
     _, right = eyelid_alignment.image_align_run(
-        img, landmarks, output_size=align_size, crop_eye="right_eye", detector="bvt"
+        img, landmarks, output_size=align_size, crop_eye="right_eye", detector=detector
     )
     merged = Image.new("RGB", (align_size, align_size))
     merged.paste(left, (0, 0))
@@ -105,8 +104,9 @@ def align_image(img: Image.Image, align: str, align_size: int, use_bvt: bool) ->
     detector = "bvt" if use_bvt else "dlib"
 
     if align == "beard":
-        fn = beard_alignment if use_bvt else org_alignment
-        _, aligned = fn.image_align_run(img, landmarks, output_size=align_size, detector=detector)
+        _, aligned = beard_alignment.image_align_run(
+            img, landmarks, output_size=align_size, detector=detector
+        )
         return aligned
     if align == "eyebrow":
         _, aligned = eyebrow_alignment.image_align_run(
@@ -114,16 +114,12 @@ def align_image(img: Image.Image, align: str, align_size: int, use_bvt: bool) ->
         )
         return aligned
     if align == "face":
-        fn = face_alignment if use_bvt else org_alignment
-        _, aligned = fn.image_align_run(img, landmarks, output_size=align_size, detector=detector)
-        return aligned
-    if align == "eyelid":
-        if use_bvt:
-            return _align_eyelid_bvt(img, landmarks, align_size)
-        _, aligned = org_alignment.image_align_run(
-            img, landmarks, output_size=align_size, detector="dlib"
+        _, aligned = face_alignment.image_align_run(
+            img, landmarks, output_size=align_size, detector=detector
         )
         return aligned
+    if align == "eyelid":
+        return _align_eyelid(img, landmarks, align_size, detector)
     raise ValueError(f"Unknown align type: {align}")
 
 

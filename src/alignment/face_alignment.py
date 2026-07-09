@@ -49,11 +49,37 @@ def get_crop_rect_bvt(face_landmarks, expansion_ratio=1.0):
 
     return quad, qsize
 
-def image_align_run(img, face_landmarks, gt_img = None, mask_img = None, detector='bvt', output_size=1024, transform_size=4096, enable_padding=False, expansion_ratio=1.0):
-    assert detector == 'bvt', 'Unsupported detector: {}'.format(detector)
+def get_crop_rect_dlib(face_landmarks, expansion_ratio=1.0):
+    lm = np.array(face_landmarks, dtype=np.float64)
+    lm_eye_left = lm[36:42]
+    lm_eye_right = lm[42:48]
+    lm_mouth_outer = lm[48:60]
 
-    # Align function from FFHQ dataset pre-processing step
-    quad, qsize = get_crop_rect_bvt(face_landmarks, expansion_ratio)
+    eye_left = np.mean(lm_eye_left, axis=0)
+    eye_right = np.mean(lm_eye_right, axis=0)
+    eye_avg = (eye_left + eye_right) * 0.5
+    eye_to_eye = eye_right - eye_left
+    mouth_left = lm_mouth_outer[0]
+    mouth_right = lm_mouth_outer[6]
+    mouth_avg = (mouth_left + mouth_right) * 0.5
+    eye_to_mouth = mouth_avg - eye_avg
+
+    x = eye_to_eye - np.flipud(eye_to_mouth) * [-1, 1]
+    x /= np.hypot(*x)
+    x *= max(np.hypot(*eye_to_eye) * 1.6, np.hypot(*eye_to_mouth) * 1.4)
+    x *= expansion_ratio
+    y = np.flipud(x) * [-1, 1]
+    c = eye_avg + eye_to_mouth * 0.4
+    quad = np.stack([c - x - y, c - x + y, c + x + y, c + x - y])
+    qsize = np.hypot(*x) * 2
+    return quad, qsize
+
+def image_align_run(img, face_landmarks, gt_img = None, mask_img = None, detector='bvt', output_size=1024, transform_size=4096, enable_padding=False, expansion_ratio=1.0):
+    quad, qsize = (
+        get_crop_rect_bvt(face_landmarks, expansion_ratio)
+        if detector == 'bvt'
+        else get_crop_rect_dlib(face_landmarks, expansion_ratio)
+    )
 
     info = {}
     info['ori_quad'] = np.copy(quad)

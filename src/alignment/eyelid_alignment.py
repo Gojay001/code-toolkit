@@ -77,12 +77,38 @@ def get_crop_rect_bvt(face_landmarks, expansion_ratio=1.0, crop_eye="left_eye"):
 
     return quad, qsize
 
+def get_crop_rect_dlib(face_landmarks, expansion_ratio=1.0, crop_eye="left_eye"):
+    lm = np.array(face_landmarks, dtype=np.float64)
+    left_eye_length = np.hypot(*(lm[39] - lm[36]))
+    right_eye_length = np.hypot(*(lm[45] - lm[42]))
+    max_eye_length = max(left_eye_length, right_eye_length)
+
+    if crop_eye == "left_eye":
+        x = lm[39] - lm[36]
+        x /= np.hypot(*x)
+        x *= 0.9 * max(left_eye_length, 0.8 * max_eye_length)
+        x *= expansion_ratio
+        y = np.flipud(x) * [-1, 1] * 0.5
+        c = np.mean(lm[36:42], axis=0)
+    else:
+        x = lm[45] - lm[42]
+        x /= np.hypot(*x)
+        x *= 0.9 * max(right_eye_length, 0.8 * max_eye_length)
+        x *= expansion_ratio
+        y = np.flipud(x) * [-1, 1] * 0.5
+        c = np.mean(lm[42:48], axis=0)
+
+    quad = np.stack([c - x - y, c - x + y, c + x + y, c + x - y])
+    qsize = np.hypot(*x) * 2
+    return quad, qsize
+
 def image_align_run(img, face_landmarks, gt_img = None, mask_img = None,  detector='bvt', output_size=1024, transform_size=4096, enable_padding=False, expansion_ratio=1.0, crop_eye="left_eye"):
 
-    assert detector == 'bvt', 'Unsupported detector: {}'.format(detector)
-
-    # Align function from FFHQ dataset pre-processing step
-    quad, qsize = get_crop_rect_bvt(face_landmarks, expansion_ratio, crop_eye)
+    quad, qsize = (
+        get_crop_rect_bvt(face_landmarks, expansion_ratio, crop_eye)
+        if detector == 'bvt'
+        else get_crop_rect_dlib(face_landmarks, expansion_ratio, crop_eye)
+    )
 
     info = {}
     info['ori_quad'] = np.copy(quad)
