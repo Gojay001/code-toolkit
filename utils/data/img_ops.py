@@ -46,9 +46,12 @@ def gaussian_blur(img_name):
 
 
 if __name__ == '__main__':
-    file_name = './imgs/'
+    # file_name = './imgs/'
     # image_resize('test.jpg', (150, 150))
-    batch_resize(file_name)
+    # batch_resize(file_name)
     # img = 'Porsche1.jpg'
     # hist_equalize(img)
     # gaussian_blur(img)
+    img_name = 'mobilenet.png'
+    file_name = '../../imgs/'
+    image_resize(img_name, file_name=file_name)

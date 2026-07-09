@@ -1,0 +1,35 @@
+{
+  "model": "gender_race.onnx",
+  "inputs": {
+    "per_input": {
+      "input": {
+        "path": "/Users/bigo10295/Downloads/code-toolkit/imgs/22.png",
+        "skipped_align": true,
+        "detector": "skipped"
+      }
+    }
+  },
+  "outputs": {
+    "output_gender": {
+      "shape": [
+        1,
+        1
+      ],
+      "values": 0.001673281192779541
+    },
+    "output_race": {
+      "shape": [
+        1,
+        4
+      ],
+      "values": [
+        -1.743937373161316,
+        -1.789402723312378,
+        2.1261863708496094,
+        -1.4519107341766357
+      ],
+      "argmax": 2
+    }
+  },
+  "status": "ok"
+}

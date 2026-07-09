@@ -1,0 +1,23 @@
+{
+  "skill_name": "video-animation-spec",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我写一个 15 秒产品广告动画规格：智能手表在都市晨跑场景，先特写表盘再拉远看到跑步者。要拆场景并输出 markdown+json。",
+      "expected_output": "Markdown 含多场景 JSON，每场景有 keyframe_image、animation、正负向 prompt",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "根据这段 PRD 生成动画提示词文档：「猫咪从窗台跳下，慢动作落地，然后走向食盆」只要一个连续镜头就行。",
+      "expected_output": "单场景 Markdown + 一个完整 JSON，说明不拆分理由",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我有一张参考图是足球少年射门，文字补充要写实、5 秒、侧面镜头。请出图生视频用的 json 指令集。",
+      "expected_output": "参考 example 结构，含 keyframe_image 与 animation，输出到 md 文件",
+      "files": []
+    }
+  ]
+}

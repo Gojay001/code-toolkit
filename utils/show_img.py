@@ -78,14 +78,37 @@ def plot_loss(epoch, train_loss, val_loss, fig_name):
     plt.savefig(fig_name)
 
 
+def concat_images():
+    """
+    Concatenate images horizontally or vertically
+    """
+    imgs_path = [
+        '../imgs/0.png',
+        '../imgs/22.png',
+        # '../imgs/0_22.png'
+        '../imgs/22_0.png'
+    ]
+    img_list = [cv2.imread(img_path) for img_path in imgs_path]
+
+    mode = 'h'
+    if mode == 'h':
+        img_res = np.concatenate(img_list, axis=1)
+    elif mode == 'v':
+        img_res = np.concatenate(img_list, axis=0)
+
+    cv2.imwrite(f'../imgs/{imgs_path[-1]}_res.png', img_res)
+
+
 if __name__ == '__main__':
-    img = cv2.imread('../images/img.jpg', cv2.IMREAD_COLOR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    mask = cv2.imread('../images/mask.png', cv2.IMREAD_GRAYSCALE)
-    # img_mask = mask2img(img, mask)
-    hist_show(img)
-    plt_show(img)
-    cv2_show(mask)
+    concat_images()
+
+    # img = cv2.imread('../images/img.jpg', cv2.IMREAD_COLOR)
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # mask = cv2.imread('../images/mask.png', cv2.IMREAD_GRAYSCALE)
+    # # img_mask = mask2img(img, mask)
+    # hist_show(img)
+    # plt_show(img)
+    # cv2_show(mask)
 
     # =============== plot loss ==================
     # import numpy as np
